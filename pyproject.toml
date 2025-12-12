@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "alertiqo"
-version = "1.0.0"
+version = "1.0.1"
 description = "Alertiqo SDK for Python error tracking"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Alertiqo", email = "hello@alertiqo.com"}
+    {name = "Muhammad Hamizi Jaminan", email = "hello@hamizi.net"}
 ]
 keywords = ["alertiqo", "error-tracking", "python", "sdk", "monitoring"]
 classifiers = [
