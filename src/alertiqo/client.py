@@ -5,8 +5,9 @@ import os
 import platform
 import traceback
 import threading
+import linecache
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 import requests
 
 
@@ -89,10 +90,16 @@ class Alertiqo:
         
         tb = traceback.format_exception(type(error), error, error.__traceback__)
         stack_trace = "".join(tb)
+        
+        # Extract file and line from traceback
+        file_path, line_number = self._parse_traceback(error)
+        code_context = self._get_code_context(file_path, line_number)
 
         report = {
             "message": str(error),
             "stack": stack_trace,
+            "file": file_path,
+            "line": line_number,
             "level": "error",
             "timestamp": int(datetime.now().timestamp() * 1000),
             "environment": self.environment,
@@ -100,6 +107,7 @@ class Alertiqo:
             "tags": {**self.tags, **additional_data.get("tags", {})},
             "context": self._get_context(),
             "breadcrumbs": [b.to_dict() for b in self.breadcrumbs],
+            "code_context": code_context,
         }
 
         if self.user:
@@ -174,6 +182,69 @@ class Alertiqo:
             "arch": platform.machine(),
             "hostname": platform.node(),
         }
+
+    def _parse_traceback(self, error: Exception) -> Tuple[Optional[str], Optional[int]]:
+        """Extract file and line number from exception traceback."""
+        if not error.__traceback__:
+            return None, None
+        
+        # Get the last frame (where the error occurred)
+        tb = error.__traceback__
+        while tb.tb_next:
+            tb = tb.tb_next
+        
+        frame = tb.tb_frame
+        file_path = frame.f_code.co_filename
+        line_number = tb.tb_lineno
+        
+        # Skip site-packages and internal files
+        if "site-packages" in file_path or file_path.startswith("<"):
+            return None, None
+        
+        return file_path, line_number
+
+    def _get_code_context(
+        self,
+        file_path: Optional[str],
+        line_number: Optional[int],
+        context_lines: int = 5
+    ) -> Optional[Dict[str, Any]]:
+        """Get source code context around the error line."""
+        if not file_path or not line_number:
+            return None
+        
+        try:
+            # Clear linecache to ensure fresh reads
+            linecache.checkcache(file_path)
+            
+            start_line = max(1, line_number - context_lines)
+            end_line = line_number + context_lines
+            
+            pre_lines = []
+            post_lines = []
+            error_line = ""
+            
+            for i in range(start_line, end_line + 1):
+                line = linecache.getline(file_path, i)
+                if not line:
+                    continue
+                line = line.rstrip('\n')
+                
+                if i < line_number:
+                    pre_lines.append(line)
+                elif i == line_number:
+                    error_line = line
+                else:
+                    post_lines.append(line)
+            
+            return {
+                "pre_lines": pre_lines,
+                "error_line": error_line,
+                "post_lines": post_lines,
+                "start_line": start_line,
+            }
+        except Exception:
+            return None
 
     def _send_report(self, report: Dict[str, Any]) -> None:
         """Send error report to Alertiqo."""
