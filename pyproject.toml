@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "alertiqo"
-version = "1.0.2"
+version = "1.0.3"
 description = "Alertiqo SDK for Python error tracking"
 readme = "README.md"
 license = {text = "MIT"}
