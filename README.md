@@ -17,7 +17,7 @@ from alertiqo import Alertiqo
 
 alertiqo = Alertiqo(
     api_key="your-api-key",
-    endpoint="https://alertiqo.hamizi.net",
+    endpoint="https://alertiqo.io",
     environment="production",
     release="1.0.0",
 )
@@ -81,7 +81,7 @@ app = Flask(__name__)
 
 alertiqo = Alertiqo(
     api_key="your-api-key",
-    endpoint="https://alertiqo.hamizi.net",
+    endpoint="https://alertiqo.io",
 )
 alertiqo.init()
 
@@ -94,7 +94,7 @@ app.wsgi_app = alertiqo_middleware(alertiqo)(app.wsgi_app)
 ```python
 # settings.py
 ALERTIQO_API_KEY = "your-api-key"
-ALERTIQO_ENDPOINT = "https://alertiqo.hamizi.net"
+ALERTIQO_ENDPOINT = "https://alertiqo.io"
 
 # In your app's apps.py or __init__.py
 from alertiqo import Alertiqo
